@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/buddhamagnet/spotted/api"
+	"github.com/mgutz/ansi"
 )
 
 var (
@@ -29,24 +30,26 @@ func main() {
 }
 
 func poll(data chan string) {
+	phosphorize := ansi.ColorFunc("green+h:black")
+	errorize := ansi.ColorFunc("red+h:black")
 	for {
 		res, err := http.Get(api.Endpoint + spots["anders"])
 		if err != nil {
-			data <- fmt.Sprintf("%v", err)
+			data <- errorize(fmt.Sprintf("%v", err))
 			continue
 		}
 		contents, err := ioutil.ReadAll(res.Body)
 		if err != nil {
-			data <- fmt.Sprintf("%v", err)
+			data <- errorize(fmt.Sprintf("%v", err))
 			continue
 		}
 		var spot api.Spot
 		if err := json.Unmarshal(contents, &spot); err != nil {
-			data <- fmt.Sprintf("%v", err)
+			data <- errorize(fmt.Sprintf("%v", err))
 			continue
 		}
 		data <- fmt.Sprintf("%s\n", string(contents))
-		data <- fmt.Sprintf("%s\n", spot.Response.FeedResponse.Feeds.Feed.Name)
+		data <- phosphorize(fmt.Sprintf("%s\n", spot.Response.FeedResponse.Feeds.Feed.Name))
 		time.Sleep(5 * time.Second)
 	}
 }
