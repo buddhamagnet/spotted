@@ -52,7 +52,7 @@ func poll(data chan string) {
 			continue
 		}
 		data <- fmt.Sprintf("%s\n", string(contents))
-		data <- phosphorize(fmt.Sprintf("%s\n", spot.Response.FeedResponse.Feeds.Feed.Name))
+		data <- phosphorize(fmt.Sprintf("%s: %s\n", time.Now().UTC(), spot.Response.FeedResponse.Feeds.Feed.Name))
 		time.Sleep(5 * time.Second)
 	}
 }
