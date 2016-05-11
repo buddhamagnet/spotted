@@ -4,15 +4,15 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"net/http"
+	"os"
+	"time"
 
 	"github.com/buddhamagnet/spotted/api"
 )
 
 var (
 	spots map[string]string
-	data  api.Spot
 )
 
 func init() {
@@ -22,18 +22,38 @@ func init() {
 }
 
 func main() {
-	res, err := http.Get(api.Endpoint + spots["anders"])
-	if err != nil {
-		log.Fatal(err)
+	data := make(chan string, 10)
+	go poll(data)
+	go receive(data)
+	fmt.Scanf("%s", os.Stdout)
+}
+
+func poll(data chan string) {
+	for {
+		res, err := http.Get(api.Endpoint + spots["anders"])
+		if err != nil {
+			data <- fmt.Sprintf("%v", err)
+			continue
+		}
+		contents, err := ioutil.ReadAll(res.Body)
+		if err != nil {
+			data <- fmt.Sprintf("%v", err)
+			continue
+		}
+		var spot api.Spot
+		if err := json.Unmarshal(contents, &spot); err != nil {
+			data <- fmt.Sprintf("%v", err)
+			continue
+		}
+		data <- fmt.Sprintf("%s\n", string(contents))
+		data <- fmt.Sprintf("%s\n", spot.Response.FeedResponse.Feeds.Feed.Name)
+		time.Sleep(5 * time.Second)
 	}
-	defer res.Body.Close()
-	contents, err := ioutil.ReadAll(res.Body)
-	if err != nil {
-		log.Fatal(err)
+}
+
+func receive(data chan string) {
+	for {
+		response := <-data
+		fmt.Println(response)
 	}
-	if err := json.Unmarshal(contents, &data); err != nil {
-		log.Fatal(err)
-	}
-	fmt.Printf("%s\n", string(contents))
-	fmt.Printf("%s\n", data.Response.FeedResponse.Feeds.Feed.Name)
 }
