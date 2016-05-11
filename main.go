@@ -22,6 +22,11 @@ func init() {
 	}
 }
 
+var (
+	phosphorize = ansi.ColorFunc("green+h:black")
+	errorize    = ansi.ColorFunc("red+h:black")
+)
+
 func main() {
 	data := make(chan string, 10)
 	go poll(data)
@@ -30,8 +35,6 @@ func main() {
 }
 
 func poll(data chan string) {
-	phosphorize := ansi.ColorFunc("green+h:black")
-	errorize := ansi.ColorFunc("red+h:black")
 	for {
 		res, err := http.Get(api.Endpoint + spots["anders"])
 		if err != nil {
